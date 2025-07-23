@@ -1,0 +1,103 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class BankAccount {
+protected:
+    string accountNumber, accountHolderName;
+    double balance;
+public:
+    BankAccount(string accNum, string name, double bal)
+        : accountNumber(accNum), accountHolderName(name), balance(bal) {}
+
+    virtual void deposit(double amt) { balance += amt; }
+    virtual void withdraw(double amt) {
+        if (amt <= balance) balance -= amt;
+        else cout << "Insufficient balance.\n";
+    }
+    double getBalance() const { return balance; }
+
+    virtual void display() {
+        cout << "Account: " << accountNumber
+             << ", Name: " << accountHolderName
+             << ", Balance: " << balance << "\n";
+    }
+
+    virtual void calculateInterest() { cout << "No interest for base account.\n"; }
+    virtual ~BankAccount() {}
+};
+
+class SavingsAccount : public BankAccount {
+    double rate;
+public:
+    SavingsAccount(string accNum, string name, double bal, double r)
+        : BankAccount(accNum, name, bal), rate(r) {}
+
+    void calculateInterest() override {
+        cout << "Interest: " << (balance * rate / 100) << "\n";
+    }
+};
+
+class CheckingAccount : public BankAccount {
+    double overdraft;
+public:
+    CheckingAccount(string accNum, string name, double bal, double od)
+        : BankAccount(accNum, name, bal), overdraft(od) {}
+
+    void withdraw(double amt) override {
+        if (amt <= balance + overdraft) balance -= amt;
+        else cout << "Overdraft limit exceeded.\n";
+    }
+};
+
+class FixedDepositAccount : public BankAccount {
+    int term;
+public:
+    FixedDepositAccount(string accNum, string name, double bal, int t)
+        : BankAccount(accNum, name, bal), term(t) {}
+
+    void calculateInterest() override {
+        double rate = 6.5;
+        cout << "FD Interest: " << (balance * rate * term / (12 * 100)) << "\n";
+    }
+};
+
+void menu() {
+    cout << "\n1.Display 2.Deposit 3.Withdraw 4.Interest 5.Exit\nChoose: ";
+}
+
+int main() {
+    vector<BankAccount*> accs = {
+        new SavingsAccount("SA123", "jhon", 5000, 4),
+        new CheckingAccount("CA456", "dj", 2000, 1000),
+        new FixedDepositAccount("FD789", "jb", 10000, 12)
+    };
+
+    int accIndex, choice;
+    double amt;
+
+    while (true) {
+        cout << "\nSelect Account (0-jhon, 1-dj, 2-jb, others to exit): ";
+        cin >> accIndex;
+        if (accIndex < 0 || accIndex >= accs.size()) break;
+
+        BankAccount* acc = accs[accIndex];
+
+        while (true) {
+            menu();
+            cin >> choice;
+            if (choice == 5) break;
+
+            switch (choice) {
+                case 1: acc->display(); break;
+                case 2: cout << "Deposit: "; cin >> amt; acc->deposit(amt); break;
+                case 3: cout << "Withdraw: "; cin >> amt; acc->withdraw(amt); break;
+                case 4: acc->calculateInterest(); break;
+                default: cout << "Invalid.\n";
+            }
+        }
+    }
+
+    for (auto a : accs) delete a;
+    return 0;
+}
